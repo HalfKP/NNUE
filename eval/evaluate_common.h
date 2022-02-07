@@ -3,8 +3,8 @@
 
 // いまどきの手番つき評価関数(EVAL_KPPTとEVAL_KPP_KKPT)の共用header的なもの。
 
-#if defined (EVAL_KPPT) || defined(EVAL_KPP_KKPT) || defined (EVAL_KPPPT) || defined(EVAL_KPPP_KKPT) || defined(EVAL_KKPP_KKPT) || defined(EVAL_KKPPT) || \
-	defined(EVAL_KPP_KKPT_FV_VAR) || defined(EVAL_HELICES) || defined(EVAL_NABLA) || defined(EVAL_NNUE)
+#if defined (EVAL_KPPT) || defined(EVAL_KPP_KKPT) || defined(EVAL_NNUE)
+#include <functional>
 
 // KKファイル名
 #define KK_BIN "KK_synthesized.bin"
@@ -14,19 +14,6 @@
 
 // KPPファイル名
 #define KPP_BIN "KPP_synthesized.bin"
-
-// KPPPありの評価関数向け。
-#if defined (EVAL_KPPPT) || defined(EVAL_KPPP_KKPT) || defined(EVAL_HELICES)
-// KPPPファイル名
-#define KPPP_BIN "KPPP_synthesized.bin"
-#endif
-
-// KKPPありの評価関数向け。
-#if defined(EVAL_KKPP_KKPT) || defined(EVAL_KKPPT)
-// KKPPファイル名
-#define KKPP_BIN "KKPP_synthesized.bin"
-#endif
-
 
 namespace Eval
 {
@@ -43,7 +30,7 @@ namespace Eval
 	//   type = 0  : KK のみ 
 	//   type = 1  : KKPのみ 
 	//   type = 2  : KPPのみ 
-	void foreach_eval_param(std::function<void(s32, s32)>f, int type = -1);
+	void foreach_eval_param(std::function<void(int32_t, int32_t)>f, int type = -1);
 
 	// --------------------------
 	//        学習用
@@ -54,7 +41,7 @@ namespace Eval
 	// 学習率を引数に渡しておく。0.0なら、defaultの値を採用する。
 	// update_weights()のepochが、eta_epochまでetaから徐々にeta2に変化する。
 	// eta2_epoch以降は、eta2から徐々にeta3に変化する。
-	void init_grad(double eta1, u64 eta_epoch, double eta2, u64 eta2_epoch, double eta3);
+	void init_grad(double eta1, uint64_t eta_epoch, double eta2, uint64_t eta2_epoch, double eta3);
 
 	// 現在の局面で出現している特徴すべてに対して、勾配の差分値を勾配配列に加算する。
 	// freeze[0]  : kkは学習させないフラグ
@@ -69,7 +56,7 @@ namespace Eval
 	// freeze[1]  : kkpは学習させないフラグ
 	// freeze[2]  : kppは学習させないフラグ
 	// freeze[3]  : kpppは学習させないフラグ
-	void update_weights(u64 epoch, const std::array<bool,4>& freeze);
+	void update_weights(uint64_t epoch, const std::array<bool,4>& freeze);
 
 	// 評価関数パラメーターをファイルに保存する。
 	// ファイルの末尾につける拡張子を指定できる。

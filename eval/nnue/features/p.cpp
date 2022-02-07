@@ -1,7 +1,5 @@
 ﻿// NNUE評価関数の入力特徴量Pの定義
 
-#include "../../../shogi.h"
-
 #if defined(EVAL_NNUE)
 
 #include "p.h"

@@ -3,8 +3,6 @@
 #ifndef _NNUE_LAYERS_CLIPPED_RELU_H_
 #define _NNUE_LAYERS_CLIPPED_RELU_H_
 
-#include "../../../shogi.h"
-
 #if defined(EVAL_NNUE)
 
 #include "../nnue_common.h"

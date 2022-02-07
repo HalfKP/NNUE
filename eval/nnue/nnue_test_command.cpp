@@ -1,7 +1,5 @@
 ﻿// NNUE評価関数に関するUSI拡張コマンド
 
-#include "../../shogi.h"
-
 #if defined(ENABLE_TEST_CMD) && defined(EVAL_NNUE)
 
 #include "../../extra/all.h"

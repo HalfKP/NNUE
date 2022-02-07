@@ -1,16 +1,17 @@
 ﻿// NNUE評価関数の学習時用のコード
 
-#include "../../shogi.h"
-
 #if defined(EVAL_LEARN) && defined(EVAL_NNUE)
 
 #include <random>
+#include <fstream>
 
 #include "../../learn/learn.h"
 #include "../../learn/learning_tools.h"
 
 #include "../../position.h"
+#include "../../uci.h"
 #include "../../misc.h"
+#include "../../thread_win32_osx.h"
 
 #include "../evaluate_common.h"
 
@@ -37,7 +38,7 @@ std::vector<Example> examples;
 Mutex examples_mutex;
 
 // ミニバッチのサンプル数
-u64 batch_size;
+uint64_t batch_size;
 
 // 乱数生成器
 std::mt19937 rng;
@@ -57,20 +58,20 @@ double GetGlobalLearningRateScale() {
 void SendMessages(std::vector<Message> messages) {
   for (auto& message : messages) {
     trainer->SendMessage(&message);
-    ASSERT_LV3(message.num_receivers > 0);
+    assert(message.num_receivers > 0);
   }
 }
 
 }  // namespace
 
 // 学習の初期化を行う
-void InitializeTraining(double eta1, u64 eta1_epoch,
-                        double eta2, u64 eta2_epoch, double eta3) {
+void InitializeTraining(double eta1, uint64_t eta1_epoch,
+                        double eta2, uint64_t eta2_epoch, double eta3) {
   std::cout << "Initializing NN training for "
             << GetArchitectureString() << std::endl;
 
-  ASSERT(feature_transformer);
-  ASSERT(network);
+  assert(feature_transformer);
+  assert(network);
   trainer = Trainer<Network>::Create(network.get(), feature_transformer.get());
 
   if (Options["SkipLoadingEval"]) {
@@ -82,8 +83,8 @@ void InitializeTraining(double eta1, u64 eta1_epoch,
 }
 
 // ミニバッチのサンプル数を設定する
-void SetBatchSize(u64 size) {
-  ASSERT_LV3(size > 0);
+void SetBatchSize(uint64_t size) {
+  assert(size > 0);
   batch_size = size;
 }
 
@@ -97,7 +98,7 @@ void SetOptions(const std::string& options) {
   std::vector<Message> messages;
   for (const auto& option : Split(options, ',')) {
     const auto fields = Split(option, '=');
-    ASSERT_LV3(fields.size() == 1 || fields.size() == 2);
+    assert(fields.size() == 1 || fields.size() == 2);
     if (fields.size() == 1) {
       messages.emplace_back(fields[0]);
     } else {
@@ -109,10 +110,10 @@ void SetOptions(const std::string& options) {
 
 // 学習用評価関数パラメータをファイルから読み直す
 void RestoreParameters(const std::string& dir_name) {
-  const std::string file_name = path_combine(dir_name, NNUE::kFileName);
+  const std::string file_name = Path::Combine(dir_name, NNUE::kFileName);
   std::ifstream stream(file_name, std::ios::binary);
   bool result = ReadParameters(stream);
-  ASSERT(result);
+  assert(result);
 
   SendMessages({{"reset"}});
 }
@@ -136,7 +137,7 @@ void AddExample(Position& pos, Color rootColor,
   if (pos.side_to_move() != BLACK) {
     active_indices[0].swap(active_indices[1]);
   }
-  for (const auto color : COLOR) {
+  for (const auto color : Colors) {
     std::vector<TrainingFeature> training_features;
     for (const auto base_index : active_indices[color]) {
       static_assert(Features::Factorizer<RawFeatures>::GetDimensions() <
@@ -162,8 +163,8 @@ void AddExample(Position& pos, Color rootColor,
 }
 
 // 評価関数パラメーターを更新する
-void UpdateParameters(u64 epoch) {
-  ASSERT_LV3(batch_size > 0);
+void UpdateParameters(uint64_t epoch) {
+  assert(batch_size > 0);
 
   EvalLearningTools::Weight::calc_eta(epoch);
   const auto learning_rate = static_cast<LearnFloatType>(
@@ -200,22 +201,22 @@ void CheckHealth() {
 
 // 評価関数パラメーターをファイルに保存する
 void save_eval(std::string dir_name) {
-  auto eval_dir = path_combine(Options["EvalSaveDir"], dir_name);
+  auto eval_dir = Path::Combine(Options["EvalSaveDir"], dir_name);
   std::cout << "save_eval() start. folder = " << eval_dir << std::endl;
 
   // すでにこのフォルダがあるならmkdir()に失敗するが、
   // 別にそれは構わない。なければ作って欲しいだけ。
   // また、EvalSaveDirまでのフォルダは掘ってあるものとする。
-  MKDIR(eval_dir);
+  Dependency::mkdir(eval_dir);
 
   if (Options["SkipLoadingEval"] && NNUE::trainer) {
     NNUE::SendMessages({{"clear_unobserved_feature_weights"}});
   }
 
-  const std::string file_name = path_combine(eval_dir, NNUE::kFileName);
+  const std::string file_name = Path::Combine(eval_dir, NNUE::kFileName);
   std::ofstream stream(file_name, std::ios::binary);
   const bool result = NNUE::WriteParameters(stream);
-  ASSERT(result);
+  assert(result);
 
   std::cout << "save_eval() finished. folder = " << eval_dir << std::endl;
 }

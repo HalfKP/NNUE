@@ -1,9 +1,9 @@
 ﻿#ifndef _LEARN_H_
 #define _LEARN_H_
 
-#include "../shogi.h"
-
 #if defined(EVAL_LEARN)
+
+#include <vector>
 
 // =====================
 //  学習時の設定
@@ -197,24 +197,24 @@ namespace Learner
 		PackedSfen sfen;
 
 		// Learner::search()から返ってきた評価値
-		s16 score;
+		int16_t score;
 
 		// PVの初手
 		// 教師との指し手一致率を求めるときなどに用いる
-		u16 move;
+		uint16_t move;
 
 		// 初期局面からの局面の手数。
-		u16 gamePly;
+		uint16_t gamePly;
 
 		// この局面の手番側が、ゲームを最終的に勝っているなら1。負けているなら-1。
 		// 引き分けに至った場合は、0。
 		// 引き分けは、教師局面生成コマンドgensfenにおいて、
 		// LEARN_GENSFEN_DRAW_RESULTが有効なときにだけ書き出す。
-		s8 game_result;
+		int8_t game_result;
 
 		// 教師局面を書き出したファイルを他の人とやりとりするときに
 		// この構造体サイズが不定だと困るため、paddingしてどの環境でも必ず40bytesになるようにしておく。
-		u8 padding;
+		uint8_t padding;
 
 		// 32 + 2 + 2 + 2 + 1 + 1 = 40bytes
 	};
@@ -223,9 +223,9 @@ namespace Learner
 	// Learner::search() , Learner::qsearch()で用いる。
 	typedef std::pair<Value, std::vector<Move> > ValueAndPV;
 
-	// いまのところ、やねうら王2017Earlyしか、このスタブを持っていないが
+	// いまのところ、やねうら王2018 Otafukuしか、このスタブを持っていないが
 	// EVAL_LEARNをdefineするなら、このスタブが必須。
-	extern Learner::ValueAndPV  search(Position& pos, int depth , size_t multiPV = 1);
+	extern Learner::ValueAndPV  search(Position& pos, int depth , size_t multiPV = 1 , uint64_t NodesLimit = 0);
 	extern Learner::ValueAndPV qsearch(Position& pos);
 
 	double calc_grad(Value shallow, const PackedSfenValue& psv);

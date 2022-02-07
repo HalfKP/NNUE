@@ -1,14 +1,14 @@
 ﻿// NNUE評価関数の計算に関するコード
 
-#include "../../shogi.h"
-
 #if defined(EVAL_NNUE)
 
 #include <fstream>
+#include <iostream>
 
 #include "../../evaluate.h"
 #include "../../position.h"
 #include "../../misc.h"
+#include "../../uci.h"
 
 #include "evaluate_nnue.h"
 
@@ -129,7 +129,26 @@ static Value ComputeScore(const Position& pos, bool refresh = false) {
   feature_transformer->Transform(pos, transformed_features, refresh);
   alignas(kCacheLineSize) char buffer[Network::kBufferSize];
   const auto output = network->Propagate(transformed_features, buffer);
-  accumulator.score = static_cast<Value>(output[0] / FV_SCALE);
+
+  // VALUE_MAX_EVALより大きな値が返ってくるとaspiration searchがfail highして
+  // 探索が終わらなくなるのでVALUE_MAX_EVAL以下であることを保証すべき。
+
+  // この現象が起きても、対局時に秒固定などだとそこで探索が打ち切られるので、
+  // 1つ前のiterationのときの最善手がbestmoveとして指されるので見かけ上、
+  // 問題ない。このVALUE_MAX_EVALが返ってくるような状況は、ほぼ詰みの局面であり、
+  // そのような詰みの局面が出現するのは終盤で形勢に大差がついていることが多いので
+  // 勝敗にはあまり影響しない。
+
+  // しかし、教師生成時などdepth固定で探索するときに探索から戻ってこなくなるので
+  // そのスレッドの計算時間を無駄にする。またdepth固定対局でtime-outするようになる。
+
+  auto score = static_cast<Value>(output[0] / FV_SCALE);
+
+  // 1) ここ、下手にclipすると学習時には影響があるような気もするが…。
+  // 2) accumulator.scoreは、差分計算の時に用いないので書き換えて問題ない。
+  score = Math::clamp(score , -VALUE_MAX_EVAL , VALUE_MAX_EVAL);
+
+  accumulator.score = score;
   accumulator.computed_score = true;
   return accumulator.score;
 }
@@ -205,8 +224,8 @@ EvaluateHashTable g_evalTable;
 
 // prefetchする関数も用意しておく。
 void prefetch_evalhash(const Key key) {
-  constexpr auto mask = ~((u64)0x1f);
-  prefetch((void*)((u64)g_evalTable[key] & mask));
+  constexpr auto mask = ~((uint64_t)0x1f);
+  prefetch((void*)((uint64_t)g_evalTable[key] & mask));
 }
 #endif
 
@@ -216,15 +235,24 @@ void prefetch_evalhash(const Key key) {
 void load_eval() {
   NNUE::Initialize();
 
-#if defined(EVAL_LEARN)
   if (!Options["SkipLoadingEval"])
-#endif
   {
     const std::string dir_name = Options["EvalDir"];
-    const std::string file_name = path_combine(dir_name, NNUE::kFileName);
+    const std::string file_name = Path::Combine(dir_name, NNUE::kFileName);
+    //{
+    //  std::ofstream stream(file_name, std::ios::binary);
+    //  NNUE::WriteParameters(stream);
+    //}
     std::ifstream stream(file_name, std::ios::binary);
     const bool result = NNUE::ReadParameters(stream);
-    ASSERT(result);
+
+//    ASSERT(result);
+	if (!result)
+	{
+		// 読み込みエラーのとき終了してくれないと困る。
+		std::cout << "Error! : failed to read " << NNUE::kFileName << std::endl;
+		my_exit();
+	}
   }
 }
 

@@ -3,8 +3,6 @@
 #ifndef _NNUE_FEATURES_P_H_
 #define _NNUE_FEATURES_P_H_
 
-#include "../../../shogi.h"
-
 #if defined(EVAL_NNUE)
 
 #include "../../../evaluate.h"

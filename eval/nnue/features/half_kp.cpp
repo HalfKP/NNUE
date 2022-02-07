@@ -1,7 +1,5 @@
 ﻿// NNUE評価関数の入力特徴量HalfKPの定義
 
-#include "../../../shogi.h"
-
 #if defined(EVAL_NNUE)
 
 #include "half_kp.h"
@@ -30,7 +28,7 @@ inline void HalfKP<AssociatedKing>::GetPieces(
   const PieceNumber target = (AssociatedKing == Side::kFriend) ?
       static_cast<PieceNumber>(PIECE_NUMBER_KING + perspective) :
       static_cast<PieceNumber>(PIECE_NUMBER_KING + ~perspective);
-  *sq_target_k = static_cast<Square>(((*pieces)[target] - f_king) % SQ_NB);
+  *sq_target_k = static_cast<Square>(((*pieces)[target] - f_king) % SQUARE_NB);
 }
 
 // 特徴量のうち、値が1であるインデックスのリストを取得する

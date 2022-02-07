@@ -3,8 +3,6 @@
 #ifndef _NNUE_TRAINER_FEATURES_FACTORIZER_HALF_KP_H_
 #define _NNUE_TRAINER_FEATURES_FACTORIZER_HALF_KP_H_
 
-#include "../../../../shogi.h"
-
 #if defined(EVAL_NNUE)
 
 #include "../../features/half_kp.h"
@@ -43,7 +41,7 @@ class Factorizer<HalfKP<AssociatedKing>> {
     // kFeaturesHalfKP
     {true, FeatureType::kDimensions},
     // kFeaturesHalfK
-    {true, SQ_NB},
+    {true, SQUARE_NB},
     // kFeaturesP
     {true, Factorizer<P>::GetDimensions()},
     // kFeaturesHalfRelativeKP
