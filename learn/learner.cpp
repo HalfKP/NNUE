@@ -3088,7 +3088,7 @@ void learn(Position&, istringstream& is)
 	}
 	if (use_convert_plain)
 	{
-		init_nnue(true);
+		is_ready(true);
 		cout << "convert_plain.." << endl;
 		convert_plain(filenames, output_file_name);
 		return;
